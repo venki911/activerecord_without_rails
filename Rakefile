@@ -1,4 +1,5 @@
-require './lib/app'
+$LOAD_PATH.unshift File.expand_path('../lib', __FILE__)
+require 'app'
 
 task :default => :migrate
 
@@ -9,18 +10,15 @@ module SeedLoader
   end
 end
 
-db_dir = File.expand_path('../db', __FILE__)
-config_dir = File.expand_path('../config', __FILE__)
-DatabaseTasks.env = ENV['ENV'] || 'development'
-DatabaseTasks.db_dir = db_dir
-DatabaseTasks.database_configuration = YAML.load(File.read(File.join(config_dir, 'database.yml')))
-DatabaseTasks.migrations_paths = File.join(db_dir, 'migrate')
-DatabaseTasks.root = File.dirname(__FILE__)
+DatabaseTasks.env = App.env
+DatabaseTasks.db_dir = App.config.db_dir
+DatabaseTasks.database_configuration = App.config.db
+DatabaseTasks.migrations_paths = App.config.db_migrations_dir
+DatabaseTasks.root = __dir__
 ActiveRecord::Tasks::DatabaseTasks.seed_loader = SeedLoader
 
 task :environment do
-  ActiveRecord::Base.configurations = DatabaseTasks.database_configuration
-  ActiveRecord::Base.establish_connection DatabaseTasks.env
+  App.start
 end
 
 load 'active_record/railties/databases.rake'
